@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마케터 부캐 테스트</title>
+    <style>
+        /* CSS 스타일링 */
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; }
+        body { background-color: #f4f6f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #333; }
+        #app { width: 100%; max-width: 480px; min-height: 100vh; background-color: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.05); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        
+        .screen { display: none; flex-direction: column; flex: 1; padding: 40px 20px; text-align: center; justify-content: center; animation: fadeIn 0.5s ease; }
+        .screen.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 시작 화면 */
+        .start-bg { background: linear-gradient(135deg, #e0eaf5 50%, #fce4ec 50%); border-radius: 20px; padding: 40px 20px; margin-bottom: 30px; }
+        h1 { font-size: 26px; font-weight: 800; word-break: keep-all; line-height: 1.4; margin-bottom: 15px; }
+        .sub-text { font-size: 15px; color: #666; margin-bottom: 40px; line-height: 1.6; }
+        .btn-main { background-color: #111; color: #fff; border: none; padding: 18px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn-main:hover { background-color: #333; transform: scale(0.98); }
+
+        /* 질문 화면 */
+        .progress-container { width: 100%; background-color: #eee; height: 6px; border-radius: 3px; margin-bottom: 40px; }
+        .progress-bar { height: 100%; background-color: #111; border-radius: 3px; width: 0%; transition: width 0.3s; }
+        .question-number { font-size: 16px; font-weight: bold; color: #888; margin-bottom: 10px; }
+        .question-text { font-size: 22px; font-weight: bold; line-height: 1.5; word-break: keep-all; margin-bottom: 40px; min-height: 80px; }
+        .answer-btn { background-color: #f8f9fa; border: 2px solid #e9ecef; padding: 20px; border-radius: 15px; font-size: 16px; cursor: pointer; margin-bottom: 15px; transition: 0.2s; word-break: keep-all; line-height: 1.4; }
+        .answer-btn:hover { border-color: #111; background-color: #fff; }
+
+        /* 로딩 화면 */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #111; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 30px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { font-size: 18px; font-weight: bold; color: #333; height: 50px; }
+
+        /* 결과 화면 */
+        .result-type { font-size: 20px; font-weight: bold; color: #0056b3; margin-bottom: 10px; }
+        .result-title { font-size: 32px; font-weight: 900; margin-bottom: 12px; word-break: keep-all; }
+        .result-illustration-wrap {
+            width: 100%;
+            margin: 0 auto 18px;
+            text-align: center;
+        }
+        .result-illustration-wrap.is-hidden { display: none; }
+        .result-illustration {
+            display: block;
+            max-width: 100%;
+            width: auto;
+            max-height: 220px;
+            height: auto;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+        .result-desc { font-size: 16px; line-height: 1.6; color: #444; margin-bottom: 30px; text-align: left; background: #f8f9fa; padding: 20px; border-radius: 15px; white-space: pre-line; word-break: keep-all; }
+        .result-section { text-align: left; margin-bottom: 25px; }
+        .result-section--marketing-strong {
+            margin-bottom: 0;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .result-section--burnout {
+            padding-top: 20px;
+            margin-top: 0;
+        }
+        .result-section h3 { font-size: 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .result-section p { font-size: 15px; line-height: 1.6; color: #555; white-space: pre-line; word-break: keep-all; }
+        #res-weak { white-space: normal; }
+        #res-weak .weak-tag {
+            display: inline-block;
+            margin-top: 14px;
+            margin-bottom: 8px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.3;
+        }
+        #res-weak .weak-tag:first-of-type { margin-top: 10px; }
+        #res-weak .weak-risk {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+            color: #c92a2a;
+            border: 1px solid #ffc9c9;
+            box-shadow: 0 1px 2px rgba(201, 42, 42, 0.08);
+        }
+        #res-weak .weak-cure {
+            background: linear-gradient(135deg, #e7f5ff 0%, #d0ebff 100%);
+            color: #1864ab;
+            border: 1px solid #a5d8ff;
+            box-shadow: 0 1px 2px rgba(24, 100, 171, 0.08);
+        }
+        #res-strong { white-space: normal; font-size: 15px; line-height: 1.6; color: #555; word-break: keep-all; }
+        #res-strong .strong-item { margin-bottom: 18px; }
+        #res-strong .strong-item:last-child { margin-bottom: 0; }
+        #res-strong .strong-tag {
+            display: inline-block;
+            margin-bottom: 8px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.3;
+            background: linear-gradient(135deg, #ebfbee 0%, #d3f9d8 100%);
+            color: #2b8a3e;
+            border: 1px solid #b2f2bb;
+            box-shadow: 0 1px 2px rgba(43, 138, 62, 0.08);
+        }
+        #res-strong .strong-desc {
+            margin: 0;
+            padding: 0 2px;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #555;
+            font-weight: 400;
+        }
+        #res-strong .strong-desc-only { margin: 0; }
+        .partner-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            width: 100%;
+            align-items: stretch;
+        }
+        .partner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            min-height: 0;
+            background: #f1f3f5;
+            padding: 12px 12px 14px;
+            border-radius: 12px;
+            text-align: center;
+            word-break: keep-all;
+        }
+        .partner-good {
+            border-top: 3px solid #74c0fc;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+        .partner-bad {
+            border-top: 3px solid #ffa8a8;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+        .partner-heading {
+            font-size: 16px;
+            font-weight: 800;
+            margin: 0 0 8px 0;
+            padding: 0;
+            line-height: 1.25;
+            letter-spacing: -0.03em;
+        }
+        .partner-good .partner-heading { color: #1864ab; }
+        .partner-bad .partner-heading { color: #c92a2a; }
+        .partner-body { width: 100%; }
+        .partner-type {
+            display: block;
+            font-size: 16px;
+            font-weight: 800;
+            color: #212529;
+            margin: 0 0 0 0;
+            line-height: 1.35;
+            letter-spacing: -0.02em;
+        }
+        .partner-good .partner-type { color: #0b7285; }
+        .partner-bad .partner-type { color: #9c1f1f; }
+        .partner-mini-img-wrap {
+            margin: 0 auto 10px;
+            text-align: center;
+        }
+        .partner-mini-img-wrap:empty { display: none; }
+        .partner-mini-img-wrap.is-hidden { display: none; }
+        .partner-mini-img {
+            display: block;
+            max-height: 64px;
+            max-width: 100%;
+            width: auto;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+        .partner-desc {
+            margin: 10px 0 0 0;
+            padding: 10px 2px 0 2px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 1.55;
+            color: #495057;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="start-screen" class="screen active">
+        <div class="start-bg">
+            <h1 style="color: #0056b3; font-size: 16px; margin-bottom: 10px;">마케터 성격 유형 진단</h1>
+            <h1>낮에는 엑셀의 노예,<br>밤에는 감성 카피라이터?</h1>
+            <p style="font-size: 14px; color: #555;">당신의 진짜 '마케터 부캐'는 누구인가요?</p>
+        </div>
+        <p class="sub-text">전략 한 스푼, 직관 두 스푼.<br>심리학과 출신 마케터가 분석하는 당신의 마케팅 DNA.<br>딱 1분 30초면 충분합니다.</p>
+        <button class="btn-main" onclick="startTest()">내 안의 마케터 깨우기</button>
+    </div>
+
+    <div id="question-screen" class="screen">
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div id="q-num" class="question-number">Q1/12</div>
+        <div id="q-text" class="question-text">질문 텍스트</div>
+        <button id="btn-a" class="answer-btn" onclick="selectAnswer('A')">A 답변</button>
+        <button id="btn-b" class="answer-btn" onclick="selectAnswer('B')">B 답변</button>
+    </div>
+
+    <div id="loading-screen" class="screen">
+        <div class="loader"></div>
+        <div id="loading-text" class="loading-text">분석 중...</div>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <div id="res-type" class="result-type">유형명</div>
+        <div id="res-title" class="result-title">타이틀</div>
+        <div id="res-illustration-wrap" class="result-illustration-wrap">
+            <img id="res-illustration" class="result-illustration" src="" alt="" decoding="async" />
+        </div>
+        <div id="res-desc" class="result-desc">설명</div>
+        
+        <div class="result-section result-section--marketing-strong">
+            <h3>✨ 당신의 마케팅 필살기</h3>
+            <div id="res-strong" class="result-strong"></div>
+        </div>
+        <div class="result-section result-section--burnout">
+            <h3>💔 번아웃 위험신호 & 처방전</h3>
+            <p id="res-weak" class="result-weak"></p>
+        </div>
+        <div class="partner-box">
+            <div class="partner partner-good">
+                <div class="partner-heading">🤝 환상의 파트너</div>
+                <div id="res-good-partner-img" class="partner-mini-img-wrap" data-partner-img-wrap></div>
+                <div id="res-good-partner" class="partner-body"></div>
+            </div>
+            <div class="partner partner-bad">
+                <div class="partner-heading">💣 환장의 파트너</div>
+                <div id="res-bad-partner-img" class="partner-mini-img-wrap" data-partner-img-wrap></div>
+                <div id="res-bad-partner" class="partner-body"></div>
+            </div>
+        </div>
+        <button class="btn-main" onclick="location.reload()">테스트 다시하기</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "주간 아이디어 회의 시간, 나는?", a: "내 생각을 입 밖으로 꺼내며 아이디어를 구체화한다. 동료들의 반응을 볼 때 비로소 에너지가 돌고 아이디어가 발전한다.", b: "회의 전 내 생각을 메모장에 완벽히 정리해야 마음이 편하다. 정리가 덜 된 상태에서 말을 꺼내는 건 에너지가 소모되는 일이다.", type: "EI", valA: "E", valB: "I" },
+        { q: "협업 부서(디자인, 개발, 영업 등)와 소통해야 하는 상황에서 나는?", a: '"일단 잠깐 가서 이야기할까요?" 혹은 "전화 가능하세요?" 직접 대화로 풀 때 오해가 없고 속이 시원하다.', b: '"텍스트로 정리해서 드릴게요." 메신저나 메일로 히스토리를 남기며 정제된 문장으로 소통하는 것이 훨씬 명확하고 편안하다.', type: "EI", valA: "E", valB: "I" },
+        { q: "캠페인 온에어 직전, 극도의 몰입이 필요한 오후", a: '팀원들과 화이트보드 앞에 모여 "이거 어때요?"라고 계속 묻고 답하며 집단지성을 발휘할 때 집중력이 올라간다.', b: "조용히 헤드셋을 쓰고 메신저 알람을 끈 채, 나만의 세계로 깊이 파고들어 작업할 때 최상의 결과물이 나온다.", type: "EI", valA: "E", valB: "I" },
+        { q: "새로운 캠페인 레퍼런스를 수집할 때 나의 방식은?", a: "우리 업종에서 이미 성공한 사례, 구체적인 수치(CTR, ROAS)가 검증된 '확실한 데이터' 위주로 찾아본다.", b: "마케팅과 전혀 상관없는 예술 전시, 영화, 혹은 해외의 생소한 브랜드 사례에서 '새로운 연결고리'를 찾으려 한다.", type: "SN", valA: "S", valB: "N" },
+        { q: "광고 카피나 콘텐츠의 방향성을 결정할 때", a: "제품의 기능, 가격 혜택, 이벤트 기간 등 소비자가 당장 얻을 수 있는 '실질적인 정보'를 강조하는 게 우선이다.", b: "이 제품이 소비자에게 어떤 의미인지, 어떤 미래의 라이프스타일을 제안하는지 '브랜드 메시지'를 심어주는 게 우선이다.", type: "SN", valA: "S", valB: "N" },
+        { q: "업무 관련 교육이나 아티클을 볼 때 내가 끌리는 제목은?", a: "즉시 적용 가능한 효율 200% 상승 마케팅 실무 테크닉 10가지", b: "2030년, 마케팅의 정의는 어떻게 변화할 것인가? 패러다임의 전환", type: "SN", valA: "S", valB: "N" },
+        { q: "공들여 준비한 캠페인의 성과가 예상보다 저조할 때", a: '"어디서 구멍이 났지?" 즉시 대시보드를 열어 이탈률, 클릭률 등 수치를 뜯어보며 실패의 논리적 원인을 찾아낸다.', b: '"팀원들 사기가 떨어지면 어쩌지?" 고생한 동료들의 마음을 먼저 살피고, 서로 격려하며 다음을 기약할 수 있는 분위기를 만든다.', type: "TF", valA: "T", valB: "F" },
+        { q: "동료가 가져온 기획안에 치명적인 약점이 보일 때", a: '"이 부분은 전환이 안 일어날 것 같아요." 브랜드의 성과를 위해 보완해야 할 점을 가감 없이, 정확하게 피드백해 준다.', b: '"아이디어 좋네요! 그런데 이런 방향도 같이 고민해 보면 어떨까요?" 긍정적인 부분을 먼저 언급하며 개선점을 부드럽게 제안한다.', type: "TF", valA: "T", valB: "F" },
+        { q: "마케팅 의사결정의 마지막 순간, 나를 움직이는 것은?", a: '"이게 가장 효율적이니까." 비용 대비 효율(ROI)과 데이터가 증명하는 객관적인 기대 수익을 근거로 결정한다.', b: '"우리 브랜드답고, 고객이 좋아할 테니까." 브랜드가 추구하는 가치와 소비자에게 줄 정서적 만족감을 최우선으로 고려해 결정한다.', type: "TF", valA: "T", valB: "F" },
+        { q: "새로운 프로젝트가 시작될 때 나의 업무 루틴은?", a: "단계별 데드라인과 체크리스트가 포함된 상세 업무 플랜을 먼저 세워야 마음이 놓인다.", b: "큰 방향성만 정해두고, 구체적인 실행 방안은 진행 상황이나 실시간 반응에 맞춰 유연하게 채워나간다.", type: "JP", valA: "J", valB: "P" },
+        { q: "캠페인 온에어 직전, 갑작스러운 수정 요청이 들어온다면?", a: '"이미 다 세팅 끝났는데!" 미리 짜둔 타임라인이 꼬이는 것에 극심한 스트레스를 받으며, 이를 복구하려 애쓴다.', b: '"마케팅이 다 그런 거지." 돌발 상황도 업무의 일부라고 생각하며, 즉흥적으로 대안을 찾아 빠르게 대응한다.', type: "JP", valA: "J", valB: "P" },
+        { q: "나의 업무용 책상이나 폴더 정리 상태는?", a: "'240415_최종_진짜최종_확정'. 누구나 찾기 쉽게 이름과 위치가 완벽하게 정리되어 있어야 효율이 난다.", b: "'프로젝트_샘플_1', 'ㄴㅁㅇㄹ'. 나만 알아볼 수 있는 규칙(혹은 무질서)이 있지만, 필요한 건 신기하게 다 찾아낸다.", type: "JP", valA: "J", valB: "P" }
+    ];
+
+    // 16가지 전체 유형 데이터 추가
+    const results = {
+    "ESTP": {
+        type: "MARKETER",
+        title: "🏄 실시간 반응 헌터",
+        desc: "시장의 냄새를 가장 잘 맡는 사냥꾼입니다.\n지금 유행하는 밈(Meme)이나 챌린지를 우리 브랜드에 가장 빠르게 입혀 화제를 만듭니다.\n이론보다 실행을, 계획보다 반응을 믿습니다.\n위기 상황에서도 주눅 들지 않고 현장에서 돌파구를 찾아내는 행동 대장입니다.",
+        strong: "• 현장 감각: 대중이 지금 무엇에 열광하는지 본능적으로 파악해 즉각적인 성과로 연결합니다.\n• 위기 관리: 부정적인 이슈가 생겨도 당황하지 않고 재치 있게 대응해 분위기를 반전시킵니다.",
+        weak: "장기적인 브랜드 설계나 깊이 있는 데이터 분석에는 금방 지루함을 느낍니다.\n\n[위험 신호]\n\"그냥 하면 되지 뭘 이렇게 따져?\"라며 신중한 동료들을 비난하거나, 뒷감당 생각 없이 자극적인 마케팅에만 매몰될 때입니다.\n\n[처방전]\n순간의 화제성은 길게 가지 않습니다.\n당신의 폭발적인 에너지를 지속 가능한 브랜드 자산으로 바꾸려면 가끔은 엉덩이를 붙이고 앉아 '기록'과 '분석'을 해야 합니다.",
+        good: "브랜드 소울 가디언\n당신의 즉흥성에 무게감 있는 의미를 더해주는 멘토 같은 존재입니다.",
+        bad: "브랜드 소울 가디언\n너무 깊은 고민을 하는 그들의 속도가 당신에겐 답답함의 극치일 수 있습니다."
+    },
+    "ENTJ": {
+        type: "MARKETER",
+        title: "🏎️ 퍼포먼스 폭주기관차",
+        desc: "사무실에 들어서는 순간부터 '오늘의 목표'만 생각하는 전략적 리더입니다.\n감이나 운에 맡기는 마케팅을 경멸하며, 철저하게 계산된 전략과 압도적인 실행력으로 팀을 이끕니다.\n당신에게 마케팅은 정복해야 할 고지입니다.",
+        strong: "• KPI 사냥: 목표 수치가 주어지면 수단과 방법을 가리지 않고 반드시 달성해냅니다.\n• 논리적 추진력: 복잡한 이해관계를 정리하고 팀을 한 방향으로 몰아붙이는 힘이 강력합니다.",
+        weak: "성과가 전부라고 믿기에 데이터가 흔들리면 자존감도 함께 흔들립니다.\n\n[위험 신호]\n팀원의 감정을 '비효율'로 치부하며 독단적으로 결정하거나, 휴식 없이 자신과 팀을 몰아세울 때입니다.\n\n[처방전]\n당신의 엑셀에는 '사람의 마음'이라는 변수가 빠져있습니다.\n성과보다 '사람'에 투자하는 것이 장기적으로 가장 높은 ROI를 가져다준다는 것을 기억하세요.",
+        good: "기술적 해결사\n말 없이 결과로 증명하는 그들이 당신의 가장 든든한 오른팔이 됩니다.",
+        bad: "감성 카피 시인\n수치보다 감성을 중시하는 그들과는 대화 자체가 고통일 수 있습니다."
+    },
+    "INTJ": {
+        type: "MARKETER",
+        title: "🏛️ 전략의 건축가",
+        desc: "마케팅을 거대한 체스판처럼 다룹니다.\n단순히 오늘 팔 물건이 아니라, 1년 뒤 브랜드가 서 있을 위치를 설계하는 치밀한 완벽주의자입니다.\n당신의 머릿속에는 이미 고객이 움직일 모든 경로가 그려져 있습니다.",
+        strong: "• 퍼널 최적화: 고객 여정의 구멍을 찾아내 메우는 정교한 설계 능력이 탁월합니다.\n• 미래 예측: 트렌드 이면의 본질을 꿰뚫어 보고 다음 단계의 마케팅을 선제적으로 제안합니다.",
+        weak: "자신의 논리가 너무 완벽하다고 믿어 타인의 의견을 쉽게 배제하곤 합니다.\n\n[위험 신호]\n피드백을 주는 동료를 '무지하다'고 판단하고 소통을 단절하거나, 완벽한 계획을 위해 실행을 끝없이 미룰 때입니다.\n\n[처방전]\n마케팅은 과학인 동시에 예술입니다.\n가끔은 논리적으로 설명되지 않는 '고객의 변덕'을 즐겨보세요.\n시장은 가끔 논리보다 직관에 움직입니다.",
+        good: "팝업스토어 장인\n당신의 딱딱한 설계도에 생명력과 즐거움을 불어넣어 대중의 환호를 이끌어냅니다.",
+        bad: "바이럴 파티 피플\n논리도 근거도 없이 '재밌으니까 일단 하자'는 그들의 제안은 당신에게 재앙과 같습니다."
+    },
+    "ENTP": {
+        type: "MARKETER",
+        title: "🌪️ 트렌드 디스럽터",
+        desc: "모두가 '예'라고 할 때 '왜?'를 던져 판을 흔드는 사람입니다.\n기존 마케팅 문법을 파괴하고 새로운 화제를 만드는 데서 희열을 느낍니다.\n지루한 반복 업무보다는 아무도 가보지 않은 길을 개척하는 것을 선호합니다.",
+        strong: "• 발상의 전환: 고정관념을 깨는 카피와 기획으로 대중의 허를 찌르는 능력이 독보적입니다.\n• 바이럴 기획력: 어떤 요소가 사람들 사이에서 폭발할지 직관적으로 알아챕니다.",
+        weak: "아이디어는 화려하나 마무리가 약해 '벌여놓은 일'만 많아질 수 있습니다.\n\n[위험 신호]\n새로운 아이디어가 없으면 극도로 우울해하거나, 실무진의 현실적인 고충을 '창의성 부족'으로 치부할 때입니다.\n\n[처방전]\n당신의 천재적인 아이디어가 빛을 보려면 '완성'이라는 지루한 과정이 필수입니다.\n훌륭한 기획은 끝까지 구현되었을 때 비로소 가치를 증명합니다.",
+        good: "엑셀의 수호신\n당신의 무모한 아이디어를 현실로 바꿔주고 뒷감당을 해주는 가장 완벽한 파트너입니다.",
+        bad: "세심한 CX 전문가\n안정과 전통을 중시하는 그들에게 당신은 조직을 위태롭게 만드는 불안 요소일 뿐입니다."
+    },
+    "INTP": {
+        type: "MARKETER",
+        title: "🧪 데이터 연금술사",
+        desc: "유행을 따르기보다 기법의 근본적인 원리와 가설을 파고듭니다.\n겉으론 조용하지만 머릿속은 실험 설계로 가득 찬 지적인 탐험가입니다.\n당신에게 마케팅은 거대한 실험실이며 고객은 데이터 그 자체입니다.",
+        strong: "• 인사이트 채굴: 로우 데이터에서 남들이 보지 못하는 결정적인 단서를 찾아냅니다.\n• 논리적 실험: 누구도 생각 못한 혁신적인 가설을 제안하고 이를 기술적으로 검증해냅니다.",
+        weak: "완벽한 논리와 정답을 찾느라 실행 타이밍을 번번이 놓치곤 합니다.\n\n[위험 신호]\n회의 중에 논리적 모순만 찾아내 비판하거나, 실제 매출보다 '가설의 우아함'에 더 집착할 때입니다.\n\n[처방전]\n마케팅에서 '빠른 오답'은 '늦은 정답'보다 가치 있습니다.\n일단 시장에 내놓고 데이터로 답을 찾는 것이 가장 지적인 해결책임을 잊지 마세요.",
+        good: "마케팅 운영팀장\n당신의 지적인 인사이트를 실질적인 매출 시스템으로 구축해주는 실행의 마법사입니다.",
+        bad: "네트워킹 마스터\n업무보다 관계와 감정을 우선시하는 그들의 태도는 당신의 분석 논리 체계를 무너뜨립니다."
+    },
+    "ENFJ": {
+        type: "MARKETER",
+        title: "🤝 팬덤 커뮤니티 리더",
+        desc: "브랜드와 고객 사이의 관계를 예술로 승화시킵니다.\n사람의 마음을 움직이는 카리스마로 강력한 브랜드 팬덤을 구축하는 소통의 달인입니다.\n당신은 단순히 물건을 파는 게 아니라 '가치'를 전파합니다.",
+        strong: "• 설득의 소통: 타인을 진심으로 설득하는 탁월한 커뮤니케이션 능력과 협업 이끌어내기가 주특기입니다.\n• 팬덤 빌딩: 고객을 브랜드의 열렬한 지지자로 만드는 커뮤니티 전략에 강점이 있습니다.",
+        weak: "타인의 부정적인 반응이나 사소한 비판에도 에너지가 급격히 소진되어 번아웃이 옵니다.\n\n[위험 신호]\n팀원이나 고객의 불만을 자신의 인격적인 결함으로 받아들여 자책하거나, 모두를 만족시키려다 길을 잃을 때입니다.\n\n[처방전]\n모든 고객이 당신의 브랜드를 사랑할 수는 없습니다.\n비판적인 고객 또한 브랜드 성장의 밑거름임을 인정하고, '나'와 '업무'를 분리하는 연습이 필요합니다.",
+        good: "기술적 해결사\n감정에 치우치지 않는 그들의 냉철한 해결책이 당신의 뜨거운 열정을 안정적으로 지지해줍니다.",
+        bad: "전략의 건축가\n당신의 진정성 있는 접근을 '비논리적 감성 호소'라고 냉소적으로 바라보는 그들에게 깊은 상처를 받습니다."
+    },
+    "INFJ": {
+        type: "MARKETER",
+        title: "🛡️ 브랜드 소울 가디언",
+        desc: "브랜드의 진심과 본질을 수호하는 사람입니다.\n겉으론 조용하지만 브랜드 철학에 대한 확신을 품고 있는 외유내강형 마케터입니다.\n당장의 매출보다 브랜드가 세상에 줄 선한 영향력을 고민합니다.",
+        strong: "• 심층적 통찰: 소비자의 숨겨진 결핍과 욕망을 읽어내는 능력이 타의 추종을 불허합니다.\n• 진정성 있는 서사: 브랜드의 영혼을 담는 스토리텔링으로 고객의 영혼을 울립니다.",
+        weak: "숫자와 효율성만 강조하는 환경에서 자신의 정체성을 잃고 방황하기 쉽습니다.\n\n[위험 신호]\n\"이게 정말 옳은 일인가?\"라는 질문에 갇혀 행동하지 못하거나, 현실적인 제약을 '브랜드의 타락'으로 비관할 때입니다.\n\n[처방전]\n수치는 당신의 가치를 증명해주는 도구이지 적이 아닙니다.\n현실과 타협하는 것이 아니라 현실을 이용해 당신의 이상을 실현하는 법을 익히세요.",
+        good: "트렌드 디스럽터\n당신의 무거운 고민에 가벼운 재치를 더해 대중이 좋아하는 콘텐츠로 승화시켜 줍니다.",
+        bad: "실시간 반응 헌터\n본질보다 화제성을 쫓는 그들의 가벼움에 심한 피로감을 느낍니다."
+    },
+    "ENFP": {
+        type: "MARKETER",
+        title: "🎉 팝업스토어 장인",
+        desc: "세상을 즐겁게 만드는 아이디어 뱅크입니다.\n긍정적인 에너지가 넘치며, 브랜드 경험을 하나의 거대한 축제로 만드는 데 탁월한 재능이 있습니다.\n당신 주변에는 항상 새로운 사람과 아이디어가 북적입니다.",
+        strong: "• 창의력: 제약 없는 상상력으로 고객에게 놀라움을 선사하는 이벤트를 기획합니다.\n• 친화력: 처음 만나는 소비자도 금방 브랜드의 팬으로 만드는 마성의 매력이 있습니다.",
+        weak: "반복되는 행정 업무나 데이터 정산 과정에서 영혼이 급격히 가출하며 스트레스를 받습니다.\n\n[위험 신호]\n산더미처럼 쌓인 미결제 서류를 외면하고 또 다른 새로운 프로젝트만 찾아 떠돌 때입니다.\n\n[처방전]\n당신의 화려한 아이디어는 꼼꼼한 관리라는 기반 위에서 더 크게 빛납니다.\n디테일한 업무는 당신의 자유로운 상상을 현실로 묶어주는 생명줄입니다.",
+        good: "브랜드 소울 가디언\n당신의 들뜬 에너지를 차분하게 가라앉혀주고 아이디어에 깊은 의미를 부여해줍니다.",
+        bad: "엑셀의 수호신\n사소한 수치 오류를 지적하며 당신의 상상력에 찬물을 끼얹는 그들과는 상종도 하기 싫어집니다."
+    },
+    "INFP": {
+        type: "MARKETER",
+        title: "✍️ 감성 카피 시인",
+        desc: "타겟의 마음 가장 깊은 곳을 건드리는 따뜻한 언어를 사용하는 마케터입니다.\n유행어보다는 진심이 담긴 문장 하나의 힘을 믿으며, 고객과 정서적으로 연결될 때 가장 큰 보람을 느낍니다.\n당신의 카피는 누군가에겐 위로가 됩니다.",
+        strong: "• 독보적 공감: 고객이 느끼는 미세한 불편함과 결핍을 포착해 위로를 건네는 능력이 탁월합니다.\n• 스토리텔링: 브랜드를 단순한 제품이 아닌 하나의 의미 있는 이야기로 만들어냅니다.",
+        weak: "비즈니스적인 피드백이나 냉정한 성과 분석을 인신공격으로 느껴 상처받기 쉽습니다.\n\n[위험 신호]\n세상과 문을 닫고 나만의 세계에 빠지거나, 비판이 두려워 기획안을 내놓지 못할 때입니다.\n\n[처방전]\n피드백은 당신이 아니라 '콘텐츠'를 향한 것입니다.\n숫자는 당신의 감성을 더 넓은 세상에 전달해 줄 고마운 통역사일 뿐입니다.",
+        good: "퍼포먼스 폭주기관차\n당신의 감성적인 아이디어를 강력한 실행력으로 밀어붙여 세상 밖으로 꺼내줍니다.",
+        bad: "마케팅 운영팀장\n사람보다 시스템을 강조하는 그들의 차가운 말투에 매일 밤 눈물을 훔칩니다."
+    },
+    "ESTJ": {
+        type: "MARKETER",
+        title: "⏱️ 마케팅 운영팀장",
+        desc: "무질서한 아이디어들을 칼같이 정렬하여 타임라인에 넣는 효율성의 화신입니다.\n마케팅은 결국 '실행'이고 '속도'라고 믿는 실무형 리더입니다.\n당신이 있는 팀의 캠페인은 절대로 지연되는 법이 없습니다.",
+        strong: "• 프로젝트 매니지먼트: 복잡한 이해관계를 정리하고 최적의 프로세스를 구축하는 데 압도적입니다.\n• 추진력: 정해진 기한 내에 가시적인 성과를 반드시 뽑아내는 실전파 마케터입니다.",
+        weak: "효율성만 따지다 동료의 창의적 시도나 감정적인 부분을 억눌러 버릴 수 있습니다.\n\n[위험 신호]\n\"방법이 잘못됐어\"라며 팀원들을 훈계하기 시작하거나, 매뉴얼에 없는 돌발 상황에 극도로 예민해질 때입니다.\n\n[처방전]\n가끔은 '쓸데없는 일'이 브랜드의 독특한 개성을 만듭니다.\n모든 것을 통제하려 하기보다, 때로는 창의적인 혼란을 허용하는 여유를 가져보세요.",
+        good: "데이터 연금술사\n그들의 복잡한 가설을 당신이 명쾌한 실행 계획으로 바꿔줄 때 최고의 매출이 발생합니다.",
+        bad: "감성 카피 시인\n감수성에 젖어 업무 일정을 놓치는 그들을 볼 때마다 당신의 혈압은 수직 상승합니다."
+    },
+    "ISTJ": {
+        type: "MARKETER",
+        title: "📊 엑셀의 수호신",
+        desc: "정확한 정산과 검증된 데이터가 아니면 움직이지 않습니다.\n실수를 허용하지 않는 철저함으로 팀의 리스크를 관리하는 든든한 가드입니다.\n당신이 승인한 리포트는 팀 내에서 '절대 진리'로 통합니다.",
+        strong: "• 데이터 정합성: 오차 없는 정산과 꼼꼼한 리포팅으로 캠페인의 신뢰도를 책임집니다.\n• 체계적 실행력: 프로젝트의 모든 단계를 완벽히 관리하여 사고를 미연에 방지합니다.",
+        weak: "갑작스러운 계획 변경이나 검증되지 않은 새로운 실험에 대해 큰 거부감을 느낍니다.\n\n[위험 신호]\n데이터가 조금만 불확실해도 결정을 내리지 못하거나, 과거의 방식에만 집착하며 변화를 거부할 때입니다.\n\n[처방전]\n10%의 예산은 실패를 위한 실험실로 남겨두세요.\n모든 성공한 마케팅도 처음에는 '검증되지 않은 가설'에서 시작되었습니다.",
+        good: "트렌드 디스럽터\n그들의 무모한 아이디어에 현실적인 제동을 걸어주며 안전한 성공으로 이끌어주는 콤비입니다.",
+        bad: "팝업스토어 장인\n계획도 없이 느낌만으로 일을 벌이는 그들은 당신에게 가장 큰 스트레스 유발자입니다."
+    },
+    "ESFJ": {
+        type: "MARKETER",
+        title: "🌐 네트워킹 마스터",
+        desc: "인맥과 소통으로 불가능한 협업도 성사시키는 마당발입니다.\n내부 팀워크는 물론 외부 파트너십까지 매끄럽게 조율하는 마케팅 외교관입니다.\n당신이 주최하는 미팅은 언제나 화기애애하고 생산적입니다.",
+        strong: "• 관계 마케팅: 최적의 시너지를 내는 파트너를 찾아내고 강력한 유대감을 형성합니다.\n• 조직 중재력: 이해당사자들을 한마음으로 모으고 프로젝트에 활력을 불어넣습니다.",
+        weak: "타인의 평판이나 주변의 시선에 지나치게 예민해져 소신 있는 결정을 내리기 힘들어합니다.\n\n[위험 신호]\n모두의 비위를 맞추려다 캠페인의 색깔이 무색해지거나, 사적인 관계 때문에 공적인 판단을 그르칠 때입니다.\n\n[처방전]\n비즈니스의 최종 목적지는 '인기 투표'가 아니라 '성과'입니다.\n가끔은 미움받을 용기를 내어 객관적인 지표를 기준으로 결정해야 합니다.",
+        good: "비주얼 톤앤매너 장인\n그들의 감각적인 결과물이 빛을 볼 수 있도록 최고의 판을 깔아주는 조력자가 됩니다.",
+        bad: "전략의 건축가\n비즈니스 효율만 따지는 그들의 차가운 논리에 깊은 회의감을 느낍니다."
+    },
+    "ISFJ": {
+        type: "MARKETER",
+        title: "🩹 세심한 CX 전문가",
+        desc: "보이지 않는 곳에서 고객의 불편함을 제거하는 서포터입니다.\n고객 경험(CX)의 아주 작은 디테일이 브랜드의 성패를 가른다고 믿습니다.\n당신의 세심한 배려 덕분에 고객은 브랜드에 감동하며 팬이 됩니다.",
+        strong: "• 디테일 관찰력: 고객의 니즈를 미리 파악하여 서비스의 질을 높이는 능력이 탁월합니다.\n• 안정적 운영: 캠페인의 시작부터 끝까지 흐트러짐 없이 관리하는 성실함의 표본입니다.",
+        weak: "남의 부탁을 거절하지 못해 업무 과부하가 오기 쉽고, 자신을 돌볼 시간을 놓치곤 합니다.\n\n[위험 신호]\n쏟아지는 고객 문의에 감정 이입을 지나치게 하여 일상에 지장을 받거나, 변화를 두려워할 때입니다.\n\n[처방전]\n브랜드의 성장을 위해 때로는 'No'라고 말할 용기가 필요합니다.\n당신이 건강해야 고객에게도 더 큰 진심을 전할 수 있음을 잊지 마세요.",
+        good: "마케팅 운영팀장\n당신의 세심한 케어와 그들의 강력한 추진력이 만나면 완벽한 캠페인이 완성됩니다.",
+        bad: "트렌드 디스럽터\n규칙을 어기는 그들의 돌발 행동은 당신의 평화를 송두리째 앗아갑니다."
+    },
+    "ISTP": {
+        type: "MARKETER",
+        title: "🛠️ 기술적 해결사",
+        desc: "말보다 결과물로 증명하는 실전 마케터입니다.\n각종 마케팅 툴과 기술적 이슈를 가장 효율적으로 다루는 기술주의자입니다.\n복합적인 세팅도 당신의 손을 거치면 마법처럼 해결됩니다.",
+        strong: "• 문제 해결력: 복잡한 트러블의 원인을 찾아내 즉각적으로 조치하는 냉철함이 최고입니다.\n• 툴 활용 능력: 최신 마케팅 기술과 툴을 빠르게 익혀 실무에 적용하는 데 천재적입니다.",
+        weak: "장황한 비전 공유나 추상적인 기획 회의를 지루해하며 소통을 기피할 수 있습니다.\n\n[위험 신호]\n협업보다는 혼자 하는 작업에만 매몰되거나, 결과물의 '맥락'보다 '기능'에만 집착할 때입니다.\n\n[처방전]\n마케팅은 팀 스포츠입니다.\n가끔은 당신의 기술적인 해결 과정을 동료들에게 설명하고 가치를 공유하는 소통의 시간을 가져보세요.",
+        good: "퍼포먼스 폭주기관차\n목표가 명확한 그들의 리더십 아래서 당신의 기술적 역량이 최대 효율을 발휘합니다.",
+        bad: "팬덤 커뮤니티 리더\n관계와 감정을 끊임없이 강조하는 그들의 소통 방식은 당신을 질식하게 만듭니다."
+    },
+    "ISFP": {
+        type: "MARKETER",
+        title: "🎨 비주얼 톤앤매너 장인",
+        desc: "숫자로 설명되지 않는 브랜드의 '결'과 '감각'을 지키는 예술가입니다.\n트렌디한 감각으로 브랜드의 시각적 완성도를 극대화합니다.\n당신이 만지는 순간, 평범한 이미지가 럭셔리한 브랜드로 변신합니다.",
+        strong: "• 심미적 완성도: 브랜드 이미지를 고객의 뇌리에 각인시키는 감각적인 연출력이 주특기입니다.\n• 유연한 감성: 소비자에게 편안함과 아름다움을 주는 톤앤매너 조율에 능합니다.",
+        weak: "자신의 감각을 논리적인 언어나 데이터로 설명하는 과정을 매우 힘들어합니다.\n\n[위험 신호]\n감각이 부정당하면 깊은 무력감에 빠지거나, 비즈니스 목표보다 '예술성'에만 집착할 때입니다.\n\n[처방전]\n당신의 훌륭한 감각을 '데이터'의 언어로 번역하는 법을 배워보세요.\n숫자로 뒷받침된 당신의 감각은 누구도 거부할 수 없는 강력한 무기가 됩니다.",
+        good: "네트워킹 마스터\n당신의 예민한 감각을 지켜주고 세상에 잘 알려주는 최고의 매니저 역할을 해줍니다.",
+        bad: "퍼포먼스 폭주기관차\n미적인 가치보다 수치적 효율만 따지는 그들의 압박은 당신의 창의성을 메마르게 합니다."
+    },
+    "ESFP": {
+        type: "MARKETER",
+        title: "🎊 바이럴 파티 피플",
+        desc: "어디를 가나 분위기 메이커이며, 대중의 시선을 끄는 '재미있는 판'을 짜는 데 천부적입니다.\n영상과 쇼츠 콘텐츠 기획에서 독보적인 재능을 보입니다.\n당신의 마케팅에는 언제나 웃음과 즐거움이 가득합니다.",
+        strong: "• 직관적 연출: 무엇이 사람들을 즐겁게 하고 공유하게 만드는지 몸으로 알고 있습니다.\n• 친화적 마케팅: 대중과 격식 없이 소통하며 브랜드의 거리감을 순식간에 좁힙니다.",
+        weak: "체계적인 분석이나 장기적인 전략 수립 과정을 극도로 지루해하며 회피하려 합니다.\n\n[위험 신호]\n화려한 화제성 뒤에 실질적인 전환율이 없거나, 즉흥적인 감정에 따라 광고비를 낭비할 때입니다.\n\n[처방전]\n화려한 불꽃놀이 끝에는 무엇이 남아야 하는지 고민하세요.\n'재미'라는 미끼 뒤에 '매출'이라는 바늘을 정교하게 숨기는 전략적 사고가 필요합니다.",
+        good: "전략의 건축가\n당신의 화려한 퍼포먼스가 실제 성과로 이어지도록 철저한 퍼널을 설계해줍니다.",
+        bad: "엑셀의 수호신\n즐거운 아이디어 회의에서 데이터만 찾는 그들은 당신의 흥을 깨는 방해자일 뿐입니다."
+    }
+};
+
+    const loadingTexts = [
+        "팀장님 몰래 결과 창 끄는 법을 연구 중입니다...",
+        "광고주님의 변덕 지수를 계산하고 있습니다...",
+        "당신의 카피 속에서 숨겨진 감성을 채굴하는 중입니다..."
+    ];
+
+    let currentQ = 0;
+    let scores = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function startTest() {
+        showScreen('question-screen');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = questions[currentQ];
+        document.getElementById('q-num').innerText = `Q${currentQ + 1} / 12`;
+        document.getElementById('q-text').innerText = q.q;
+        document.getElementById('btn-a').innerText = q.a;
+        document.getElementById('btn-b').innerText = q.b;
+        document.getElementById('progress-bar').style.width = `${((currentQ) / 12) * 100}%`;
+    }
+
+    function selectAnswer(choice) {
+        const q = questions[currentQ];
+        if(choice === 'A') scores[q.valA]++;
+        if(choice === 'B') scores[q.valB]++;
+
+        currentQ++;
+        if (currentQ < 12) {
+            renderQuestion();
+        } else {
+            document.getElementById('progress-bar').style.width = `100%`;
+            startLoading();
+        }
+    }
+
+    function startLoading() {
+        showScreen('loading-screen');
+        let textIndex = 0;
+        document.getElementById('loading-text').innerText = loadingTexts[textIndex];
+        
+        const textInterval = setInterval(() => {
+            textIndex = (textIndex + 1) % loadingTexts.length;
+            document.getElementById('loading-text').innerText = loadingTexts[textIndex];
+        }, 1000);
+
+        setTimeout(() => {
+            clearInterval(textInterval);
+            calculateResult();
+        }, 3000);
+    }
+
+    function escapeHtml(t) {
+        return String(t)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    let partnerLabelToMbtiCache = null;
+    function getPartnerLabelToMbtiMap() {
+        if (partnerLabelToMbtiCache) return partnerLabelToMbtiCache;
+        const map = {};
+        Object.keys(results).forEach(function (code) {
+            const title = results[code].title.trim();
+            const parts = title.split(/\s+/);
+            const label = parts.length >= 2 ? parts.slice(1).join(' ') : title;
+            map[label] = code;
+        });
+        partnerLabelToMbtiCache = map;
+        return map;
+    }
+    function partnerLabelToMbti(label) {
+        const map = getPartnerLabelToMbtiMap();
+        return map[label.trim()] || null;
+    }
+    function getPartnerFirstLine(raw) {
+        const text = String(raw);
+        const nl = text.indexOf('\n');
+        return nl === -1 ? text.trim() : text.slice(0, nl).trim();
+    }
+
+    function formatPartnerHtml(raw) {
+        const text = String(raw);
+        const nl = text.indexOf('\n');
+        if (nl === -1) {
+            return '<span class="partner-type">' + escapeHtml(text) + '</span>';
+        }
+        const typeLine = escapeHtml(text.slice(0, nl).trim());
+        const desc = escapeHtml(text.slice(nl + 1)).replace(/\n/g, '<br>');
+        return '<span class="partner-type">' + typeLine + '</span><p class="partner-desc">' + desc + '</p>';
+    }
+
+    function setPartnerMiniIllustration(wrapEl, mbtiCode) {
+        if (!wrapEl) return;
+        if (!mbtiCode) {
+            wrapEl.innerHTML = '';
+            wrapEl.classList.add('is-hidden');
+            return;
+        }
+        wrapEl.classList.remove('is-hidden');
+        wrapEl.innerHTML =
+            '<img class="partner-mini-img" src="' + mbtiCode + '.png" alt="" decoding="async" />';
+        const img = wrapEl.querySelector('img');
+        img.onerror = function () {
+            wrapEl.classList.add('is-hidden');
+        };
+        img.onload = function () {
+            wrapEl.classList.remove('is-hidden');
+        };
+    }
+
+    function formatStrongHtml(raw) {
+        const strongTagEmojis = ['🎯', '💡'];
+        const lines = String(raw).split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+        const blocks = [];
+        let tagIndex = 0;
+        for (let i = 0; i < lines.length; i++) {
+            let s = lines[i];
+            if (s.indexOf('•') === 0) s = s.slice(1).trim();
+            const ci = s.indexOf(':');
+            if (ci === -1) {
+                blocks.push('<div class="strong-item"><p class="strong-desc strong-desc-only">' + escapeHtml(s) + '</p></div>');
+                continue;
+            }
+            const label = s.slice(0, ci).trim();
+            const body = s.slice(ci + 1).trim();
+            const emoji = strongTagEmojis[tagIndex % strongTagEmojis.length];
+            tagIndex += 1;
+            blocks.push(
+                '<div class="strong-item"><span class="strong-tag">' +
+                    emoji +
+                    ' ' +
+                    escapeHtml(label) +
+                    '</span><p class="strong-desc">' +
+                    escapeHtml(body) +
+                    '</p></div>'
+            );
+        }
+        return blocks.join('');
+    }
+
+    function formatWeakHtml(raw) {
+        let s = escapeHtml(raw);
+        s = s.replace(/\n/g, '<br>');
+        s = s.replace(/\[위험 신호\]/g, '<span class="weak-tag weak-risk">⚠️ 위험 신호</span>');
+        s = s.replace(/\[처방전\]/g, '<span class="weak-tag weak-cure">💊 처방전</span>');
+        return s;
+    }
+
+    function calculateResult() {
+        const mbti = 
+            (scores.E > scores.I ? "E" : "I") +
+            (scores.S > scores.N ? "S" : "N") +
+            (scores.T > scores.F ? "T" : "F") +
+            (scores.J > scores.P ? "J" : "P");
+
+        const resultData = results[mbti];
+
+        if(!resultData) {
+            alert("해당 MBTI 유형의 결과 데이터를 찾을 수 없습니다: " + mbti);
+            return;
+        }
+
+        document.getElementById('res-type').innerText = `[ ${resultData.type} ]`;
+        document.getElementById('res-title').innerText = resultData.title;
+
+        const illWrap = document.getElementById('res-illustration-wrap');
+        const ill = document.getElementById('res-illustration');
+        illWrap.classList.remove('is-hidden');
+        ill.alt = mbti + ' 마케터 유형 일러스트';
+        ill.src = mbti + '.png';
+        ill.onerror = function () {
+            illWrap.classList.add('is-hidden');
+        };
+        ill.onload = function () {
+            illWrap.classList.remove('is-hidden');
+        };
+
+        document.getElementById('res-desc').innerText = resultData.desc;
+        document.getElementById('res-strong').innerHTML = formatStrongHtml(resultData.strong);
+        document.getElementById('res-weak').innerHTML = formatWeakHtml(resultData.weak);
+        var goodFirst = getPartnerFirstLine(resultData.good);
+        var badFirst = getPartnerFirstLine(resultData.bad);
+        setPartnerMiniIllustration(document.getElementById('res-good-partner-img'), partnerLabelToMbti(goodFirst));
+        setPartnerMiniIllustration(document.getElementById('res-bad-partner-img'), partnerLabelToMbti(badFirst));
+        document.getElementById('res-good-partner').innerHTML = formatPartnerHtml(resultData.good);
+        document.getElementById('res-bad-partner').innerHTML = formatPartnerHtml(resultData.bad);
+
+        showScreen('result-screen');
+    }
+</script>
+
+</body>
+</html>
