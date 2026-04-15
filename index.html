@@ -22,6 +22,51 @@
         .sub-text { font-size: 15px; color: #666; margin-bottom: 40px; line-height: 1.6; }
         .btn-main { background-color: #111; color: #fff; border: none; padding: 18px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; }
         .btn-main:hover { background-color: #333; transform: scale(0.98); }
+        .btn-share {
+            width: 100%;
+            margin-top: 12px;
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            background: #fff;
+            color: #333;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        .btn-share:hover { border-color: #111; background: #f8f9fa; }
+        .btn-share-icon { flex-shrink: 0; }
+        .copy-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 32px;
+            transform: translateX(-50%) translateY(16px);
+            background: rgba(17, 17, 17, 0.94);
+            color: #fff;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+            z-index: 9999;
+            pointer-events: none;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+            max-width: calc(100vw - 40px);
+            text-align: center;
+        }
+        .copy-toast.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
 
         /* 질문 화면 */
         .progress-container { width: 100%; background-color: #eee; height: 6px; border-radius: 3px; margin-bottom: 40px; }
@@ -250,9 +295,19 @@
                 <div id="res-bad-partner" class="partner-body"></div>
             </div>
         </div>
-        <button class="btn-main" onclick="location.reload()">테스트 다시하기</button>
+        <button type="button" class="btn-main" onclick="location.reload()">테스트 다시하기</button>
+        <button type="button" class="btn-share" onclick="copyShareLink()" aria-label="테스트 링크 복사">
+            <svg class="btn-share-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
+                <path d="M8.59 13.51l6.83 3.98M15.41 6.49l-6.82 3.98" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            테스트 공유하기
+        </button>
     </div>
 </div>
+<div id="copy-toast" class="copy-toast" role="status" aria-live="polite">링크가 복사되었습니다</div>
 
 <script>
     const questions = [
@@ -423,6 +478,43 @@
         "광고주님의 변덕 지수를 계산하고 있습니다...",
         "당신의 카피 속에서 숨겨진 감성을 채굴하는 중입니다..."
     ];
+
+    const SHARE_TEST_URL = 'https://jiwoo-world.github.io/marketer-test/';
+
+    function showCopyToast() {
+        const el = document.getElementById('copy-toast');
+        if (!el) return;
+        el.classList.add('visible');
+        clearTimeout(window.__copyToastTimer);
+        window.__copyToastTimer = setTimeout(function () {
+            el.classList.remove('visible');
+        }, 2500);
+    }
+
+    function copyShareLink() {
+        const url = SHARE_TEST_URL;
+        function fallback() {
+            var ta = document.createElement('textarea');
+            ta.value = url;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                showCopyToast();
+            } catch (err) {
+                window.prompt('아래 링크를 복사해 주세요:', url);
+            }
+            document.body.removeChild(ta);
+        }
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(url).then(showCopyToast).catch(fallback);
+        } else {
+            fallback();
+        }
+    }
 
     let currentQ = 0;
     let scores = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
