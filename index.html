@@ -16,10 +16,17 @@
         .screen.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 시작 화면 */
-        .start-bg { background: linear-gradient(135deg, #e0eaf5 50%, #fce4ec 50%); border-radius: 20px; padding: 40px 20px; margin-bottom: 30px; }
-        h1 { font-size: 26px; font-weight: 800; word-break: keep-all; line-height: 1.4; margin-bottom: 15px; }
-        .sub-text { font-size: 15px; color: #666; margin-bottom: 40px; line-height: 1.6; }
+        /* 시작 화면 — 영역 전체를 커버 이미지로 (test_cover_new.png) */
+        #start-screen {
+            justify-content: flex-end;
+            align-items: stretch;
+            background-color: #e8ecf0;
+            background-image: url('test_cover_new.png');
+            background-size: cover;
+            background-position: center top;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+        }
         .btn-main { background-color: #111; color: #fff; border: none; padding: 18px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; }
         .btn-main:hover { background-color: #333; transform: scale(0.98); }
         .btn-share {
@@ -245,13 +252,7 @@
 
 <div id="app">
     <div id="start-screen" class="screen active">
-        <div class="start-bg">
-            <h1 style="color: #0056b3; font-size: 16px; margin-bottom: 10px;">마케터 성격 유형 진단</h1>
-            <h1>낮에는 엑셀의 노예,<br>밤에는 감성 카피라이터?</h1>
-            <p style="font-size: 14px; color: #555;">당신의 진짜 '마케터 부캐'는 누구인가요?</p>
-        </div>
-        <p class="sub-text">전략 한 스푼, 직관 두 스푼.<br>심리학과 출신 마케터가 분석하는 당신의 마케팅 DNA.<br>딱 1분 30초면 충분합니다.</p>
-        <button class="btn-main" onclick="startTest()">내 안의 마케터 깨우기</button>
+        <button type="button" class="btn-main" onclick="startTest()">내 안의 마케터 깨우기</button>
     </div>
 
     <div id="question-screen" class="screen">
